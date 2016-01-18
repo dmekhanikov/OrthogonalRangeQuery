@@ -17,6 +17,10 @@ public class Point {
         return y;
     }
 
+    public double distTo(Point o) {
+        return Math.sqrt(Math.pow(x - o.getX(), 2) + Math.pow(y - o.getY(), 2));
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
