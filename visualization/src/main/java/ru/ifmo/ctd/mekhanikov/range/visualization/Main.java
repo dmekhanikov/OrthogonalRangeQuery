@@ -4,9 +4,11 @@ import ru.ifmo.ctd.mekhanikov.range.NaiveRangeQuery;
 import ru.ifmo.ctd.mekhanikov.range.Point;
 import ru.ifmo.ctd.mekhanikov.range.RangeQuery;
 import ru.ifmo.ctd.mekhanikov.range.Rectangle;
+import ru.ifmo.ctd.mekhanikov.range.tree.RangeTree;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,7 +18,7 @@ public class Main extends Frame {
 
     private List<Point> points = new ArrayList<>();
     private Rectangle rectangle;
-    private RangeQuery rangeQuery = new NaiveRangeQuery();
+    private RangeQuery rangeQuery = new RangeTree();
 
     public Main() {
         super("Range Query Visualization");
