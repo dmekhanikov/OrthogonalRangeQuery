@@ -34,7 +34,6 @@ public class RangeTree implements RangeQuery {
         Node oldNode = root.find(key);
         if (oldNode.key != key) {
             insert(oldNode, p);
-            validateSizes(oldNode);
         } else {
             if (dim > 1) {
                 if (oldNode.key != Double.POSITIVE_INFINITY) {
@@ -49,24 +48,25 @@ public class RangeTree implements RangeQuery {
         }
     }
 
-    private void addToParents(Node node, Point p) {
-        for (Node curNode = node.parent; curNode != null; curNode = curNode.parent) {
-            curNode.nextDimTree.add(p);
-        }
-    }
-
-    private void validateSizes(Node node) {
-        while (node != null) {
-            if (!node.isLeaf()) {
-                node.size = node.left.size + node.right.size;
-            }
-            node = node.parent;
-        }
-    }
-
     @Override
     public void remove(Point p) {
-
+        double key = getKey(p);
+        Node node = root.find(key);
+        if (node.key != key) {
+            return;
+        }
+        if (dim == 1) {
+            node.points.remove(p);
+            if (node.points.isEmpty()) {
+                remove(node);
+            }
+        } else {
+            node.nextDimTree.remove(p);
+            removeFromParents(node, p);
+            if (node.nextDimTree.root.size == 3) {
+                remove(node);
+            }
+        }
     }
 
     @Override
@@ -92,12 +92,14 @@ public class RangeTree implements RangeQuery {
         Node copiedNode = new Node(oldNode.key);
         Node newNode = new Node(key);
         copiedNode.size = oldNode.size;
-        oldNode.size++;
         if (oldNode.key < newNode.key) {
             validate(oldNode, copiedNode, newNode);
+            oldNode.key = copiedNode.key;
         } else {
             validate(oldNode, newNode, copiedNode);
+            oldNode.key = newNode.key;
         }
+        validateSizes(oldNode);
         if (dim > 1) {
             newNode.nextDimTree = new RangeTree(dim - 1);
             newNode.nextDimTree.add(p);
@@ -118,6 +120,24 @@ public class RangeTree implements RangeQuery {
             newNode.points = new ArrayList<>();
             newNode.points.add(p);
         }
+    }
+
+    private void remove(Node node) {
+        Node parent = node.parent;
+        Node sibling;
+        if (node.key <= parent.key) {
+            sibling = parent.right;
+        } else {
+            sibling = parent.left;
+        }
+        double newKey = node.getPred().key;
+        parent.key = sibling.key;
+        parent.nextDimTree = sibling.nextDimTree;
+        validate(parent, sibling.left, sibling.right);
+        parent.size = sibling.size;
+        parent.points = sibling.points;
+        validateSizes(parent);
+        validateKeys(parent.parent, node.key, newKey);
     }
 
     private List<Node> getSubtrees(double a, double b) {
@@ -158,6 +178,36 @@ public class RangeTree implements RangeQuery {
         return result;
     }
 
+    private void addToParents(Node node, Point p) {
+        for (Node curNode = node.parent; curNode != null; curNode = curNode.parent) {
+            curNode.nextDimTree.add(p);
+        }
+    }
+
+    private void removeFromParents(Node node, Point p) {
+        for (Node curNode = node.parent; curNode != null; curNode = curNode.parent) {
+            curNode.nextDimTree.remove(p);
+        }
+    }
+
+    private void validateSizes(Node node) {
+        while (node != null) {
+            if (!node.isLeaf()) {
+                node.size = node.left.size + node.right.size + 1;
+            }
+            node = node.parent;
+        }
+    }
+
+    private void validateKeys(Node node, double oldKey, double newKey) {
+        while (node != null) {
+            if (node.key == oldKey) {
+                node.key = newKey;
+            }
+            node = node.parent;
+        }
+    }
+
     private double getKey(Point p) {
         if (dim == 2) {
             return p.getX();
@@ -167,10 +217,15 @@ public class RangeTree implements RangeQuery {
     }
 
     private void validate(Node parent, Node left, Node right) {
-        left.parent = parent;
-        right.parent = parent;
-        parent.left = left;
-        parent.right = right;
-        parent.key = left.key;
+        if (left != null) {
+            left.parent = parent;
+        }
+        if (right != null) {
+            right.parent = parent;
+        }
+        if (parent != null) {
+            parent.left = left;
+            parent.right = right;
+        }
     }
 }

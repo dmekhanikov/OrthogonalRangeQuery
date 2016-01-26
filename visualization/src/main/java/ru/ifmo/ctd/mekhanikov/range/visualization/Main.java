@@ -1,6 +1,5 @@
 package ru.ifmo.ctd.mekhanikov.range.visualization;
 
-import ru.ifmo.ctd.mekhanikov.range.NaiveRangeQuery;
 import ru.ifmo.ctd.mekhanikov.range.Point;
 import ru.ifmo.ctd.mekhanikov.range.RangeQuery;
 import ru.ifmo.ctd.mekhanikov.range.Rectangle;
@@ -44,7 +43,7 @@ public class Main extends Frame {
 
             @Override
             public void rightDoubleClick() {
-                rangeQuery = new NaiveRangeQuery();
+                rangeQuery = new RangeTree();
                 points.clear();
                 rectangle = null;
                 repaint();

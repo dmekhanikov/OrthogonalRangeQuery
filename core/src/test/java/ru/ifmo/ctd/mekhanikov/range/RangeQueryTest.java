@@ -2,6 +2,7 @@ package ru.ifmo.ctd.mekhanikov.range;
 
 import org.junit.Assert;
 import org.junit.Test;
+import ru.ifmo.ctd.mekhanikov.range.tree.RangeTree;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -9,7 +10,7 @@ import java.util.stream.Collectors;
 public class RangeQueryTest extends Assert {
 
     private static void test(List<Point> points, List<Rectangle> queries) {
-        RangeQuery rangeQuery = new NaiveRangeQuery();
+        RangeQuery rangeQuery = new RangeTree();
         points.forEach(rangeQuery::add);
         executeQueries(rangeQuery, points, queries);
         List<Point> removed = points.subList(points.size() / 2, points.size());
