@@ -34,6 +34,7 @@ public class RangeTree implements RangeQuery {
         Node oldNode = root.find(key);
         if (oldNode.key != key) {
             insert(oldNode, p);
+            validateSizes(oldNode);
         } else {
             if (dim > 1) {
                 if (oldNode.key != Double.POSITIVE_INFINITY) {
@@ -51,6 +52,15 @@ public class RangeTree implements RangeQuery {
     private void addToParents(Node node, Point p) {
         for (Node curNode = node.parent; curNode != null; curNode = curNode.parent) {
             curNode.nextDimTree.add(p);
+        }
+    }
+
+    private void validateSizes(Node node) {
+        while (node != null) {
+            if (!node.isLeaf()) {
+                node.size = node.left.size + node.right.size;
+            }
+            node = node.parent;
         }
     }
 
@@ -81,6 +91,8 @@ public class RangeTree implements RangeQuery {
         double key = getKey(p);
         Node copiedNode = new Node(oldNode.key);
         Node newNode = new Node(key);
+        copiedNode.size = oldNode.size;
+        oldNode.size++;
         if (oldNode.key < newNode.key) {
             validate(oldNode, copiedNode, newNode);
         } else {
