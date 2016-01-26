@@ -1,11 +1,16 @@
 package ru.ifmo.ctd.mekhanikov.range.tree;
 
+import ru.ifmo.ctd.mekhanikov.range.Point;
+
+import java.util.List;
+
 class Node {
     double key;
     Node parent;
     Node left;
     Node right;
     RangeTree nextDimTree;
+    List<Point> points;
 
     Node(double key) {
         this.key = key;

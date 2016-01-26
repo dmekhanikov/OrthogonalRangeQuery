@@ -35,8 +35,12 @@ public class RangeTree implements RangeQuery {
         if (oldNode.key != key) {
             insert(oldNode, p);
         } else {
-            if (dim > 1 && oldNode.key != Double.POSITIVE_INFINITY ) {
-                oldNode.nextDimTree.add(p);
+            if (dim > 1) {
+                if (oldNode.key != Double.POSITIVE_INFINITY) {
+                    oldNode.nextDimTree.add(p);
+                }
+            } else {
+                oldNode.points.add(p);
             }
         }
         if (dim > 1) {
@@ -52,17 +56,21 @@ public class RangeTree implements RangeQuery {
 
     @Override
     public void remove(Point p) {
+
     }
 
     @Override
     public List<Point> get(Rectangle query) {
         List<Point> result = new ArrayList<>();
-        for (Node xNode = root.getMin().getSucc(); xNode.key != Double.POSITIVE_INFINITY; xNode = xNode.getSucc()) {
-            for (Node yNode = xNode.nextDimTree.root.getMin().getSucc();
-                    yNode.key != Double.POSITIVE_INFINITY; yNode = yNode.getSucc()) {
-                Point point = new Point(xNode.key, yNode.key);
-                if (query.contains(point)) {
-                    result.add(point);
+        Point bl = query.getBottomLeft();
+        Point tr = query.getTopRight();
+        List<Node> xSubtrees = getSubtrees(bl.getX(), tr.getX());
+        for (Node xRoot : xSubtrees) {
+            List<Node> ySubtrees = xRoot.nextDimTree.getSubtrees(bl.getY(), tr.getY());
+            for (Node yRoot : ySubtrees) {
+                double maxKey = yRoot.getMax().key;
+                for (Node yNode = yRoot.getMin(); yNode.key <= maxKey; yNode = yNode.getSucc()) {
+                    result.addAll(yNode.points);
                 }
             }
         }
@@ -84,11 +92,58 @@ public class RangeTree implements RangeQuery {
             copiedNode.nextDimTree = oldNode.nextDimTree;
             oldNode.nextDimTree = new RangeTree(dim - 1);
             oldNode.nextDimTree.add(p);
-            for (Node yNode = oldNode.nextDimTree.root.getMin().getSucc();
-                 yNode.key != Double.POSITIVE_INFINITY; yNode = yNode.getSucc()) {
-                oldNode.nextDimTree.add(new Point(oldNode.key, yNode.key));
+            if (copiedNode.key != Double.POSITIVE_INFINITY) {
+                for (Node yNode = copiedNode.nextDimTree.root.getMin().getSucc();
+                     yNode.key != Double.POSITIVE_INFINITY; yNode = yNode.getSucc()) {
+                    for (Point copiedPoint : yNode.points) {
+                        oldNode.nextDimTree.add(copiedPoint);
+                    }
+                }
             }
+        } else {
+            copiedNode.points = oldNode.points;
+            oldNode.points = null;
+            newNode.points = new ArrayList<>();
+            newNode.points.add(p);
         }
+    }
+
+    private List<Node> getSubtrees(double a, double b) {
+        Node pred = root.find(a).getPred();
+        Node succ = root.find(b);
+        if (succ.key == b) {
+            succ = succ.getSucc();
+        }
+        Node left = pred.parent;
+        Node right = succ.parent;
+        int leftHeight = left.getHeight();
+        int rightHeight = right.getHeight();
+        List<Node> result = new ArrayList<>();
+        while (leftHeight > rightHeight) {
+            if (pred.key <= left.key) {
+                result.add(left.right);
+            }
+            left = left.parent;
+            leftHeight--;
+        }
+        while (leftHeight < rightHeight) {
+            if (succ.key > right.key) {
+                result.add(right.left);
+            }
+            right = right.parent;
+            rightHeight--;
+        }
+        while (left != right) {
+            if (pred.key <= left.key) {
+                result.add(left.right);
+            }
+            if (succ.key > right.key) {
+                result.add(right.left);
+            }
+            left = left.parent;
+            right = right.parent;
+        }
+        return result;
     }
 
     private double getKey(Point p) {
