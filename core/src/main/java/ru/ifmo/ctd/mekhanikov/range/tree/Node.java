@@ -34,8 +34,11 @@ class Node {
 
     Node getPred() {
         Node node = parent;
-        while (key <= node.key) {
+        while (node != null && key <= node.key) {
             node = node.parent;
+        }
+        if (node == null || node.left == null) {
+            return null;
         }
         node = node.left;
         return node.getMax();
@@ -43,8 +46,11 @@ class Node {
 
     Node getSucc() {
         Node node = parent;
-        while (key > node.key) {
+        while (node != null && key > node.key) {
             node = node.parent;
+        }
+        if (node == null || node.right == null) {
+            return null;
         }
         node = node.right;
         return node.getMin();
