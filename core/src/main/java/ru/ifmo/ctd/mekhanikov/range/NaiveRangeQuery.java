@@ -18,4 +18,9 @@ public class NaiveRangeQuery implements RangeQuery {
     public List<Point> get(Rectangle query) {
         return points.stream().filter(query::contains).collect(Collectors.toList());
     }
+
+    @Override
+    public int getCount(Rectangle query) {
+        return (int) points.stream().filter(query::contains).count();
+    }
 }

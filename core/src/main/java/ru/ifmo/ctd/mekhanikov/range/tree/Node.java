@@ -12,6 +12,7 @@ class Node {
     RangeTree nextDimTree;
     List<Point> points;
     int size = 1;
+    int count;
 
     Node(double key) {
         this.key = key;

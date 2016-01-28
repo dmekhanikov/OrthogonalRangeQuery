@@ -39,6 +39,8 @@ public class RangeTree implements RangeQuery {
             } else {
                 oldNode.points.add(p);
             }
+            oldNode.count++;
+            validateSizes(oldNode);
         }
         if (dim > 1) {
             addToParents(oldNode, p);
@@ -55,6 +57,8 @@ public class RangeTree implements RangeQuery {
         }
         if (dim == 1) {
             node.points.remove(p);
+            node.count--;
+            validateSizes(node.parent);
             if (node.points.isEmpty()) {
                 remove(node);
             }
@@ -80,6 +84,21 @@ public class RangeTree implements RangeQuery {
             }
         }
         return result;
+    }
+
+    @Override
+    public int getCount(Rectangle query) {
+        int count = 0;
+        Point bl = query.getBottomLeft();
+        Point tr = query.getTopRight();
+        List<Node> xSubtrees = getSubtrees(bl.getX(), tr.getX());
+        for (Node xRoot : xSubtrees) {
+            List<Node> ySubtrees = xRoot.nextDimTree.getSubtrees(bl.getY(), tr.getY());
+            if (!ySubtrees.isEmpty()) {
+                count += ySubtrees.stream().map(node -> node.count).reduce((a, b) -> a + b).get();
+            }
+        }
+        return count;
     }
 
     private void balance(Node node) {
@@ -129,6 +148,7 @@ public class RangeTree implements RangeQuery {
                 root.points = new ArrayList<>();
                 root.points.addAll(points);
             }
+            root.count = points.size();
             return root;
         }
         int mid = count / 2;
@@ -152,6 +172,7 @@ public class RangeTree implements RangeQuery {
                 validateRefs(root, left, right);
                 root.key = left.getMax().key;
                 root.size = left.size + right.size + 1;
+                root.count = left.count + right.count;
                 return root;
             }
             prev = p;
@@ -195,6 +216,7 @@ public class RangeTree implements RangeQuery {
         double key = getKey(p);
         Node copiedNode = copyNode(oldNode);
         Node newNode = new Node(key);
+        newNode.count = 1;
         if (oldNode.key < newNode.key) {
             validateRefs(oldNode, copiedNode, newNode);
             oldNode.key = copiedNode.key;
@@ -216,6 +238,7 @@ public class RangeTree implements RangeQuery {
     private Node copyNode(Node oldNode) {
         Node copiedNode = new Node(oldNode.key);
         copiedNode.size = oldNode.size;
+        copiedNode.count = oldNode.count;
         if (dim > 1) {
             copiedNode.nextDimTree = oldNode.nextDimTree;
             oldNode.nextDimTree = new RangeTree(dim - 1);
@@ -244,6 +267,7 @@ public class RangeTree implements RangeQuery {
         parent.nextDimTree = sibling.nextDimTree;
         validateRefs(parent, sibling.left, sibling.right);
         parent.size = sibling.size;
+        parent.count = sibling.count;
         parent.points = sibling.points;
         validateSizes(parent);
         validateKeys(parent.parent, node.key, newKey);
@@ -303,6 +327,7 @@ public class RangeTree implements RangeQuery {
         while (node != null) {
             if (!node.isLeaf()) {
                 node.size = node.left.size + node.right.size + 1;
+                node.count = node.left.count + node.right.count;
             }
             node = node.parent;
         }

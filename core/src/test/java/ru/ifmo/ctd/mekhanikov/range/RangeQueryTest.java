@@ -22,6 +22,7 @@ public class RangeQueryTest extends Assert {
 
     private static void executeQueries(RangeQuery rangeQuery, List<Point> points, List<Rectangle> queries) {
         for (Rectangle query : queries) {
+            assertEquals(getCount(points, query), rangeQuery.getCount(query));
             Set<Point> expected = getResult(points, query);
             Set<Point> actual = rangeQuery.get(query).stream().collect(Collectors.toSet());
             assertEquals(expected, actual);
@@ -30,6 +31,10 @@ public class RangeQueryTest extends Assert {
 
     private static Set<Point> getResult(List<Point> points, Rectangle query) {
         return points.stream().filter(query::contains).collect(Collectors.toSet());
+    }
+
+    private static int getCount(List<Point> points, Rectangle query) {
+        return (int) points.stream().filter(query::contains).count();
     }
 
     @Test

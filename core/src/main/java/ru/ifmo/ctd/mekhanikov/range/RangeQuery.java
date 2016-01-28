@@ -6,4 +6,5 @@ public interface RangeQuery {
     void add(Point p);
     void remove(Point p);
     List<Point> get(Rectangle query);
+    int getCount(Rectangle query);
 }
